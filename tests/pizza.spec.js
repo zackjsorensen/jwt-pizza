@@ -59,3 +59,41 @@ await page.getByRole('button', { name: 'Pay now' }).click();
 await expect(page.getByRole('heading')).toContainText('Here is your JWT Pizza!');
 
 });
+
+test('about page', async ({ page }) => {
+
+await page.goto('http://localhost:5173/');
+await page.getByRole('link', { name: 'About' }).click();
+await expect(page.getByRole('img').nth(3)).toBeVisible();
+await expect(page.getByRole('main')).toContainText('The secret sauce');
+
+});
+
+test('franchise page', async ({ page }) => {
+
+await page.goto('/');
+await page.getByRole('contentinfo').getByRole('link', { name: 'Franchise' }).click();
+await expect(page.getByRole('main').locator('img')).toBeVisible();
+await expect(page.getByRole('main')).toContainText('So you want a piece of the pie?');
+await expect(page.getByRole('main')).toContainText('Unleash Your Potential');
+});
+
+
+test('login as admin', async ({ page }) => {
+
+    // TODO: hardcoded admin user, change to be more robust in future
+
+await page.goto('http://localhost:5173/');
+await page.getByRole('link', { name: 'Login' }).click();
+await page.getByRole('textbox', { name: 'Email address' }).click();
+await page.getByRole('textbox', { name: 'Email address' }).fill('m2mcvalkc8@admin.com');
+await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+await page.getByRole('textbox', { name: 'Password' }).fill('toomanysecrets');
+await page.getByRole('button', { name: 'Login' }).click();
+await expect(page.locator('#navbar-dark')).toContainText('Admin');
+await page.getByRole('link', { name: 'Admin' }).click();
+await expect(page.getByRole('list')).toContainText('admin-dashboard');
+await expect(page.getByRole('button', { name: 'Add Franchise' })).toBeVisible();
+
+
+});
