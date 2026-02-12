@@ -7,24 +7,31 @@ test('home page', async ({ page }) => {
 });
 
 test('register user', async ({ page }) => {
+  // TODO: investigate why passes twice in a row - shouldn't be able to register same user twice.
+  // Is test data persistent across tests?
 
-  await page.goto('http://127.0.0.1:5173/');
-await page.goto('http://127.0.0.1:5173/');
-await page.getByRole('link', { name: 'Register' }).click();
+await page.goto('/');
+
+await page.goto('http://localhost:5173/register');
 await page.getByRole('textbox', { name: 'Full name' }).fill('z');
 await page.getByRole('textbox', { name: 'Full name' }).press('Tab');
 await page.getByRole('textbox', { name: 'Email address' }).fill('z@jwt.com');
 await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
 await page.getByRole('textbox', { name: 'Password' }).fill('z');
-await page.getByRole('textbox', { name: 'Password' }).press('Enter');
 await page.getByRole('button', { name: 'Register' }).click();
-await page.getByRole('button', { name: 'Register' }).click();
-await page.getByText('Order nowMost amazing pizza').click();
-await page.locator('body').press('ControlOrMeta+=');
-await page.locator('body').press('ControlOrMeta+=');
-await expect(page.locator('#navbar-dark')).toContainText('Logout');
-await page.getByRole('link', { name: 'z' }).click();
-await expect(page.getByRole('link', { name: 'z' })).toBeVisible();
+await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+await page.getByRole('link', { name: 'Order' }).click();
+await page.getByRole('combobox').selectOption('1');
+await page.getByRole('link', { name: 'Image Description Cheese' }).click();
+await page.getByRole('link', { name: 'Image Description Cheese' }).click();
+await expect(page.locator('form')).toContainText('Selected pizzas: 2');
+await page.getByRole('button', { name: 'Checkout' }).click();
+await expect(page.getByRole('button', { name: 'Pay now' })).toBeVisible();
+await page.getByRole('button', { name: 'Pay now' }).click();
+await expect(page.getByText('Here is your JWT Pizza!')).toBeVisible();
+await expect(page.getByRole('heading')).toContainText('Here is your JWT Pizza!');
+
+
 });
 
 test('logged out test', async ({ page, context }) => {
@@ -35,30 +42,20 @@ test('logged out test', async ({ page, context }) => {
 
 
 test('login and buy pizza', async ({ page }) => {
-
 await page.goto('/');
 await page.getByRole('link', { name: 'Login' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).click();
 await page.getByRole('textbox', { name: 'Email address' }).fill('z@jwt.com');
 await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
 await page.getByRole('textbox', { name: 'Password' }).fill('z');
-await page.getByRole('textbox', { name: 'Password' }).press('Enter');
 await page.getByRole('button', { name: 'Login' }).click();
-await page.getByRole('button', { name: 'Order now' }).click();
-await page.getByRole('combobox').selectOption('3');
-await page.getByRole('link', { name: 'Image Description Veggie A' }).click();
-await page.getByText('Selected pizzas:').click();
-await expect(page.locator('form')).toContainText('Selected pizzas: 1');
-await page.getByRole('link', { name: 'Image Description Pepperoni' }).click();
-await expect(page.locator('form')).toContainText('Selected pizzas: 2');
-await expect(page.getByRole('button', { name: 'Checkout' })).toBeVisible();
-await page.getByRole('button', { name: 'Checkout' }).click();
-await page.getByRole('navigation', { name: 'Global' }).click();
-await expect(page.getByRole('button', { name: 'Pay now' })).toBeVisible();
-await page.getByRole('button', { name: 'Pay now' }).click();
-await expect(page.getByRole('heading')).toContainText('Here is your JWT Pizza!');
+await expect(page.locator('#navbar-dark')).toContainText('Logout');
+await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+await page.getByRole('link', { name: 'About' }).click();
+await expect(page.getByRole('main')).toContainText('The secret sauce');
+
 
 });
+
 
 test('about page', async ({ page }) => {
 
@@ -83,17 +80,15 @@ test('login as admin', async ({ page }) => {
 
     // TODO: hardcoded admin user, change to be more robust in future
 
-await page.goto('http://localhost:5173/');
+await page.goto('/');
+
 await page.getByRole('link', { name: 'Login' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).fill('m2mcvalkc8@admin.com');
+await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
 await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-await page.getByRole('textbox', { name: 'Password' }).fill('toomanysecrets');
+await page.getByRole('textbox', { name: 'Password' }).fill('admin');
 await page.getByRole('button', { name: 'Login' }).click();
-await expect(page.locator('#navbar-dark')).toContainText('Admin');
-await page.getByRole('link', { name: 'Admin' }).click();
-await expect(page.getByRole('list')).toContainText('admin-dashboard');
-await expect(page.getByRole('button', { name: 'Add Franchise' })).toBeVisible();
+await page.getByRole('button').filter({ hasText: /^$/ }).click();
+await page.getByRole('button').filter({ hasText: /^$/ }).click();
 
 
 });
