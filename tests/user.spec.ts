@@ -106,3 +106,14 @@ test("update email", async ({ page }) => {
    
 });
 
+
+test("update admin info", async ({ page }) => {
+
+    // need to mock the getUser endpoint to return an admin user, then test that the admin can update their info and that it persists.
+
+    // mock
+    
+
+    const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
+
+});
