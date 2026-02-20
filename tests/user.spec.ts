@@ -1,7 +1,7 @@
 import { test, expect } from "playwright-test-coverage";
 import { Page } from "playwright";
 
-test.setTimeout(10000); // 30s per test
+test.setTimeout(process.env.CI ? 30000 : 10000);
 
 // Helper to register a new user
 async function registerUser(page: Page, name = "pizza diner") {
