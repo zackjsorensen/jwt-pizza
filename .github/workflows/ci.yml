@@ -46,6 +46,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Run tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:coverage
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
