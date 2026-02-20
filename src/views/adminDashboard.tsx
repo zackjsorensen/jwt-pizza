@@ -290,8 +290,7 @@ export default function AdminDashboard(props: Props) {
                                                                     deleteUser(user)
                                                                 }
                                                             >
-                                                                <TrashIcon />
-                                                                Close
+                                                                X
                                                             </button>
                                                         </td>
                                                     </tr>

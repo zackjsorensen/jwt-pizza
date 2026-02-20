@@ -272,6 +272,7 @@ test('delete user as admin', async ({ page }) => {
     await expect(page.getByTestId('users-table')).toBeVisible();
     await expect(page.getByText('a@jwt.com')).toBeVisible();
     await expect(page.getByText('Kai Chen')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'X', exact: true }).nth(1)).toBeVisible();
 });
 
 
