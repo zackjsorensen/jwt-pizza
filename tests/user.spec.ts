@@ -1,7 +1,7 @@
 import { test, expect } from "playwright-test-coverage";
 import { Page } from "playwright";
 
-test.setTimeout(30000); // 30s per test
+test.setTimeout(10000); // 30s per test
 
 // Helper to register a new user
 async function registerUser(page: Page, name = "pizza diner") {
@@ -15,9 +15,8 @@ async function registerUser(page: Page, name = "pizza diner") {
   await page.getByRole("textbox", { name: "Password" }).fill(password);
   await page.getByRole("button", { name: "Register" }).click();
 
-  // Wait for login navbar update
-  await page.locator("#navbar-dark").waitFor({ state: "visible" });
-  await expect(page.locator("#navbar-dark")).toContainText("Logout");
+  // Wait for login - user badge appears when logged in
+  await page.getByRole("link", { name: "pd" }).waitFor({ state: "visible" });
 
   return { email, password };
 }
