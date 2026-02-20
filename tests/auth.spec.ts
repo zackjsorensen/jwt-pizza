@@ -28,7 +28,27 @@ async function basicInit(page: Page) {
         },
     };
 
-    
+    let franchiseRes = {
+        franchises: [
+            {
+                id: 2,
+                admins: [{ id: 4, name: "pizza franchisee", email: "f@jwt.com" }],
+                name: "LotaPizza",
+                stores: [
+                    { id: 4, name: "Lehi" },
+                    { id: 5, name: "Springville" },
+                    { id: 6, name: "American Fork" },
+                ],
+            },
+            {
+                id: 3,
+                admins: [{ id: 5, name: "Admin User", email: "a@jwt.com" }],
+                name: "PizzaCorp",
+                stores: [{ id: 7, name: "Spanish Fork" }],
+            },
+            { id: 4, admins: [{ email: "jimmy@jwt.com" }], name: "topSpot", stores: [] },
+        ],
+    };
 
     // Authorize login for the given user
     await page.route("*/**/api/auth", async (route) => {
@@ -36,7 +56,6 @@ async function basicInit(page: Page) {
             loggedInUser = undefined;
             await route.fulfill({ status: 204 });
             return;
-
         }
 
         const loginReq = route.request().postDataJSON();
@@ -65,13 +84,15 @@ async function basicInit(page: Page) {
         const page = Number(url.searchParams.get("page") || "0");
         const limit = Number(url.searchParams.get("limit") || "10");
         const name = url.searchParams.get("name");
-        const users = Object.values(validUsers ).filter((u) => {
+        const users = Object.values(validUsers).filter((u) => {
             if (!name) return true;
             return u.name!.includes(name);
         });
         const start = page * limit;
         const end = start + limit;
-        await route.fulfill({ json: { users: users.slice(start, end), more: end < users.length } });
+        await route.fulfill({
+            json: { users: users.slice(start, end), more: end < users.length },
+        });
     });
 
     await page.route(/\/api\/user\/(\d+)/, async (route) => {
@@ -136,23 +157,18 @@ async function basicInit(page: Page) {
 
     // Standard franchises and stores
     await page.route(/\/api\/franchise(\?.*)?$/, async (route) => {
-        const franchiseRes = {
-            franchises: [
-                {
-                    id: 2,
-                    name: "LotaPizza",
-                    stores: [
-                        { id: 4, name: "Lehi" },
-                        { id: 5, name: "Springville" },
-                        { id: 6, name: "American Fork" },
-                    ],
-                },
-                { id: 3, name: "PizzaCorp", stores: [{ id: 7, name: "Spanish Fork" }] },
-                { id: 4, name: "topSpot", stores: [] },
-            ],
-        };
-        expect(route.request().method()).toBe("GET");
-        await route.fulfill({ json: franchiseRes });
+        if (route.request().method() === "POST") {
+            const franchiseReq = route.request().postDataJSON();
+            franchiseRes.franchises.push({
+                id: franchiseRes.franchises.length + 2,
+                name: franchiseReq.name,
+                admins: franchiseReq.admins,
+                stores: [],
+            });
+            await route.fulfill({ json: franchiseRes.franchises[franchiseRes.franchises.length - 1] });
+        } else if (route.request().method() === "GET") {
+            await route.fulfill({ json: franchiseRes });
+        }
     });
 
     // Order a pizza.
@@ -238,45 +254,53 @@ test("update admin user", async ({ page }) => {
     await page.getByRole("textbox", { name: "Password" }).fill("admin");
     await page.getByRole("button", { name: "Login" }).click();
 
-    
     await expect(page.getByRole("link", { name: "ua" })).toBeVisible();
 });
 
-
-test('login as admin', async ({ page }) => {
-
+test("login as admin", async ({ page }) => {
     // TODO: hardcoded admin user, change to be more robust in future
-await basicInit(page);
-await page.goto('/');
-
-await page.getByRole('link', { name: 'Login' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
-await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-await page.getByRole('textbox', { name: 'Password' }).fill('admin');
-await page.getByRole('button', { name: 'Login' }).click();
-await page.getByRole('link', { name: 'Admin' }).click();
-await expect(page.getByTestId('users-header')).toBeVisible();
-await expect(page.getByTestId('users-table')).toBeVisible();
-
-});
-
-test('delete user as admin', async ({ page }) => { 
     await basicInit(page);
-    await page.goto('/');
-    
-    await page.getByRole('link', { name: 'Login' }).click();
-    await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
-    await page.getByRole('textbox', { name: 'Password' }).fill('admin');
-    await page.getByRole('button', { name: 'Login' }).click();
-    await page.getByRole('link', { name: 'Admin' }).click();
-    await expect(page.getByTestId('users-table')).toBeVisible();
-    await expect(page.getByText('a@jwt.com')).toBeVisible();
-    await expect(page.getByText('Kai Chen')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'X', exact: true }).nth(1)).toBeVisible();
+    await page.goto("/");
+
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+    await page.getByRole("textbox", { name: "Email address" }).press("Tab");
+    await page.getByRole("textbox", { name: "Password" }).fill("admin");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "Admin" }).click();
+    await expect(page.getByTestId("users-header")).toBeVisible();
+    await expect(page.getByTestId("users-table")).toBeVisible();
 });
 
+test("delete user as admin", async ({ page }) => {
+    await basicInit(page);
+    await page.goto("/");
 
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("admin");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "Admin" }).click();
+    await expect(page.getByTestId("users-table")).toBeVisible();
+    await expect(page.getByText("a@jwt.com")).toBeVisible();
+    await expect(page.getByText("Kai Chen")).toBeVisible();
+    await expect(page.getByRole("button", { name: "X", exact: true }).nth(1)).toBeVisible();
+});
 
+test("create franchise", async ({ page }) => {
+    await basicInit(page);
+    await page.goto("/");
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("admin");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "Admin" }).click();
+    await page.getByRole("button", { name: "Add Franchise" }).click();
+    await page.getByPlaceholder("franchise name").fill("Test Franchise");
+    await page.getByPlaceholder("franchisee admin email").fill("d@jwt.com");
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.getByText("Test Franchise")).toBeVisible();
+});
 
 // new plan
 /* 
@@ -286,8 +310,6 @@ test('delete user as admin', async ({ page }) => {
 
 
 */
-
-
 
 // test("access franchise dashboard", async ({ page }) => {
 //     await basicInit(page);
