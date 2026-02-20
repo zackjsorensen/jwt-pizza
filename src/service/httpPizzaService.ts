@@ -42,11 +42,20 @@ class HttpPizzaService implements PizzaService {
                 }
 
                 const r = await fetch(path, options);
-                const j = await r.json();
+
+                // Some endpoints (e.g. DELETE) return 204 No Content with an empty body.
+                // Calling r.json() on an empty body throws, so handle 204/empty responses explicitly.
+                if (r.status === 204) {
+                    resolve(undefined);
+                    return;
+                }
+
+                const text = await r.text();
+                const j = text ? JSON.parse(text) : undefined;
                 if (r.ok) {
                     resolve(j);
                 } else {
-                    reject({ code: r.status, message: j.message });
+                    reject({ code: r.status, message: j?.message || text });
                 }
             } catch (e: any) {
                 reject({ code: 500, message: e.message });
@@ -88,6 +97,10 @@ class HttpPizzaService implements PizzaService {
             }
         }
         return Promise.resolve(result);
+    }
+
+    async deleteUser(user: User): Promise<void> {
+        return await this.callEndpoint(`/api/user/${user.id}`, "DELETE");
     }
 
     getAllUsers(

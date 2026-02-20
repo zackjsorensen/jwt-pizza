@@ -4,7 +4,7 @@ import { User, Role } from "../src/service/pizzaService";
 
 async function basicInit(page: Page) {
     let loggedInUser: User | undefined;
-    const validUsers: Record<string, User> = {
+    let validUsers: Record<string, User> = {
         "d@jwt.com": {
             id: "3",
             name: "Kai Chen",
@@ -96,15 +96,30 @@ async function basicInit(page: Page) {
     });
 
     await page.route(/\/api\/user\/(\d+)/, async (route) => {
-        expect(route.request().method()).toBe("PUT");
-        const updateUser: User = route.request().postDataJSON();
-        if (!loggedInUser) {
-            await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
-            return;
+        if (route.request().method() === "PUT") {
+            const updateUser: User = route.request().postDataJSON();
+            if (!loggedInUser) {
+                await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
+                return;
+            }
+            loggedInUser = { ...loggedInUser, ...updateUser };
+            validUsers[loggedInUser.email!] = loggedInUser;
+            await route.fulfill({ json: loggedInUser });
+        } else if (route.request().method() === "DELETE") {
+            const match = route
+                .request()
+                .url()
+                .match(/\/api\/user\/(\d+)/);
+            const id = match?.[1];
+
+            const userToDelete = Object.values(validUsers).find((u) => u.id === id);
+            // const userToDelete: User = route.request().postDataJSON();
+            if (userToDelete) {
+                delete validUsers[userToDelete.email!];
+            }
+            console.log("After delete:", Object.keys(validUsers));
+            await route.fulfill({ status: 204 });
         }
-        loggedInUser = { ...loggedInUser, ...updateUser };
-        validUsers[loggedInUser.email!] = loggedInUser;
-        await route.fulfill({ json: loggedInUser });
     });
 
     // Return the currently logged in user
@@ -165,7 +180,9 @@ async function basicInit(page: Page) {
                 admins: franchiseReq.admins,
                 stores: [],
             });
-            await route.fulfill({ json: franchiseRes.franchises[franchiseRes.franchises.length - 1] });
+            await route.fulfill({
+                json: franchiseRes.franchises[franchiseRes.franchises.length - 1],
+            });
         } else if (route.request().method() === "GET") {
             await route.fulfill({ json: franchiseRes });
         }
@@ -257,13 +274,13 @@ test("update admin user", async ({ page }) => {
     await expect(page.getByRole("link", { name: "ua" })).toBeVisible();
 });
 
-test('view history page', async ({ page }) => {
+test("view history page", async ({ page }) => {
     await basicInit(page);
     await page.goto("/");
-    await page.goto('http://localhost:5173/');
-    await page.getByRole('link', { name: 'History' }).click();
-    await expect(page.getByText('Mama Rucci, my my')).toBeVisible();
-    await expect(page.getByRole('heading')).toContainText('Mama Rucci, my my');
+    await page.goto("http://localhost:5173/");
+    await page.getByRole("link", { name: "History" }).click();
+    await expect(page.getByText("Mama Rucci, my my")).toBeVisible();
+    await expect(page.getByRole("heading")).toContainText("Mama Rucci, my my");
 });
 
 test("login as admin", async ({ page }) => {
@@ -293,7 +310,12 @@ test("delete user as admin", async ({ page }) => {
     await expect(page.getByTestId("users-table")).toBeVisible();
     await expect(page.getByText("a@jwt.com")).toBeVisible();
     await expect(page.getByText("Kai Chen")).toBeVisible();
-    await expect(page.getByRole("button", { name: "X", exact: true }).nth(1)).toBeVisible();
+    await page
+        .getByRole("row", { name: /Kai Chen/i })
+        .getByRole("button", { name: "X" })
+        .click();
+    await expect(page.getByText("Kai Chen")).toHaveCount(0);
+
 });
 
 test("create franchise", async ({ page }) => {
@@ -311,8 +333,6 @@ test("create franchise", async ({ page }) => {
     await expect(page.getByText("Test Franchise")).toBeVisible();
 });
 
-
-
 test("access franchise dashboard", async ({ page }) => {
     await basicInit(page);
     await page.goto("/");
@@ -323,7 +343,10 @@ test("access franchise dashboard", async ({ page }) => {
     await page.getByRole("textbox", { name: "Password" }).fill("f");
     await page.getByRole("button", { name: "Login" }).click();
     await page.getByRole("link", { name: "Franchise" }).first().click();
-    await expect(page.getByText("Everything you need to run an JWT Pizza franchise. Your gateway to success.")).toBeVisible();
+    await expect(
+        page.getByText(
+            "Everything you need to run an JWT Pizza franchise. Your gateway to success.",
+        ),
+    ).toBeVisible();
     await expect(page.getByText("pizzaPocket")).toBeVisible();
-
 });

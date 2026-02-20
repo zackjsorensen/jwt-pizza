@@ -50,7 +50,12 @@ export default function AdminDashboard(props: Props) {
     }
 
     async function deleteUser(user: User) {
-        throw new Error("Not implemented");
+        try {
+            const deleteRes = await pizzaService.deleteUser(user);
+            setUserList(await pizzaService.getAllUsers(usersPage, 10, "*"));
+        } catch (e) {
+            console.error("Error deleting user:", e);
+        }
     }
 
     async function closeStore(franchise: Franchise, store: Store) {
