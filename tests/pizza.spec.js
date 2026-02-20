@@ -48,6 +48,8 @@ await page.getByRole('textbox', { name: 'Email address' }).fill('z@jwt.com');
 await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
 await page.getByRole('textbox', { name: 'Password' }).fill('z');
 await page.getByRole('button', { name: 'Login' }).click();
+await page.locator("#navbar-dark").waitFor({ state: "visible" });
+
 await expect(page.locator('#navbar-dark')).toContainText('Logout');
 await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
 await page.getByRole('link', { name: 'About' }).click();
