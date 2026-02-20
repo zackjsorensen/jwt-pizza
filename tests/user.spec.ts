@@ -15,8 +15,8 @@ async function registerUser(page: Page, name = "pizza diner") {
   await page.getByRole("textbox", { name: "Password" }).fill(password);
   await page.getByRole("button", { name: "Register" }).click();
 
-  // Wait for login - user badge appears when logged in
-  await page.getByRole("link", { name: "pd" }).waitFor({ state: "visible" });
+  // Wait for login - Logout link only appears when logged in
+  await page.getByRole("link", { name: "Logout" }).waitFor({ state: "attached" });
 
   return { email, password };
 }
@@ -25,8 +25,7 @@ test("updateUser", async ({ page }) => {
   const { email } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: "pd" }).waitFor({ state: "visible" });
-  await page.getByRole("link", { name: "pd" }).click();
+  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
   await expect(page.getByRole("main")).toContainText("pizza diner");
 
   // Edit user
@@ -54,8 +53,7 @@ test("update password", async ({ page }) => {
   const { email, password } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: "pd", exact: true }).waitFor({ state: "visible" });
-  await page.getByRole("link", { name: "pd", exact: true }).click();
+  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
   await page.getByRole("button", { name: "Edit" }).click();
 
   // Update password
@@ -81,8 +79,7 @@ test("update email", async ({ page }) => {
   const { email, password } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: "pd", exact: true }).waitFor({ state: "visible" });
-  await page.getByRole("link", { name: "pd", exact: true }).click();
+  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
   await page.getByRole("button", { name: "Edit" }).click();
 
   // Update email
