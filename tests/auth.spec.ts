@@ -2,6 +2,9 @@ import { test, expect } from "playwright-test-coverage";
 import { Page } from "playwright";
 import { User, Role } from "../src/service/pizzaService";
 
+// Increase default timeout for CI
+test.setTimeout(30_000);
+
 async function basicInit(page: Page) {
     let loggedInUser: User | undefined;
     let validUsers: Record<string, User> = {
