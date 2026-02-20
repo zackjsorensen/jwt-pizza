@@ -25,7 +25,7 @@ test("updateUser", async ({ page }) => {
   const { email } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
+  await page.getByRole("link", { name: "pd" }).first().click();
   await expect(page.getByRole("main")).toContainText("pizza diner");
 
   // Edit user
@@ -53,7 +53,7 @@ test("update password", async ({ page }) => {
   const { email, password } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
+  await page.getByRole("link", { name: "pd" }).first().click();
   await page.getByRole("button", { name: "Edit" }).click();
 
   // Update password
@@ -79,7 +79,7 @@ test("update email", async ({ page }) => {
   const { email, password } = await registerUser(page);
 
   // Navigate to user page
-  await page.getByRole("link", { name: /^[a-z]$/ }).first().click();
+  await page.getByRole("link", { name: "pd" }).click();
   await page.getByRole("button", { name: "Edit" }).click();
 
   // Update email
