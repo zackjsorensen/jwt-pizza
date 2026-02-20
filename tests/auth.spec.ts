@@ -136,7 +136,7 @@ async function basicInit(page: Page) {
     });
 
     // Get a user's franchise
-    await page.route(/\/api\/franchise\/:(\d+)/, async (route) => {
+    await page.route(/\/api\/franchise\/(\d+)/, async (route) => {
         // '/api/franchise/:userId'
         const userId = "4";
         if (userId === "4") {
@@ -257,6 +257,15 @@ test("update admin user", async ({ page }) => {
     await expect(page.getByRole("link", { name: "ua" })).toBeVisible();
 });
 
+test('view history page', async ({ page }) => {
+    await basicInit(page);
+    await page.goto("/");
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('link', { name: 'History' }).click();
+    await expect(page.getByText('Mama Rucci, my my')).toBeVisible();
+    await expect(page.getByRole('heading')).toContainText('Mama Rucci, my my');
+});
+
 test("login as admin", async ({ page }) => {
     // TODO: hardcoded admin user, change to be more robust in future
     await basicInit(page);
@@ -302,25 +311,19 @@ test("create franchise", async ({ page }) => {
     await expect(page.getByText("Test Franchise")).toBeVisible();
 });
 
-// new plan
-/* 
-  --- startup backend in CI with test configuration ---
-         -- figure out if that works with locahost and if .env vars need to change
 
 
+test("access franchise dashboard", async ({ page }) => {
+    await basicInit(page);
+    await page.goto("/");
 
-*/
+    //login as franchise owner
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("f@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("f");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "Franchise" }).first().click();
+    await expect(page.getByText("Everything you need to run an JWT Pizza franchise. Your gateway to success.")).toBeVisible();
+    await expect(page.getByText("pizzaPocket")).toBeVisible();
 
-// test("access franchise dashboard", async ({ page }) => {
-//     await basicInit(page);
-
-//     //login as franchise owner
-//     await page.getByRole("link", { name: "Login" }).click();
-//     await page.getByRole("textbox", { name: "Email address" }).fill("f@jwt.com");
-//     await page.getByRole("textbox", { name: "Password" }).fill("f");
-//     await page.getByRole("button", { name: "Login" }).click();
-//     await page.getByRole("link", { name: "Franchise" }).first().click();
-//     await expect(page.getByText("Everything you need to run an JWT Pizza franchise. Your gateway to success.")).toBeVisible();
-//     await expect(page.getByText("pizzaPocket")).toBeVisible();
-
-// });
+});

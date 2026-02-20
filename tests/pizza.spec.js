@@ -81,11 +81,3 @@ await expect(page.getByRole('main')).toContainText('Unleash Your Potential');
 });
 
 
-
-
-test('login, create franchise, logout', async ({ page }) => {
-  await page.goto('/');
-  
-
-
-});
