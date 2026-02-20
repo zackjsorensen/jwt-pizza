@@ -222,6 +222,35 @@ test("update admin user", async ({ page }) => {
     await expect(page.getByRole("link", { name: "ua" })).toBeVisible();
 });
 
+
+test('login as admin', async ({ page }) => {
+
+    // TODO: hardcoded admin user, change to be more robust in future
+await basicInit(page);
+await page.goto('/');
+
+await page.getByRole('link', { name: 'Login' }).click();
+await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+await page.getByRole('button', { name: 'Login' }).click();
+await page.getByRole('link', { name: 'Admin' }).click();
+await expect(page.getByTestId('users-header')).toBeVisible();
+await expect(page.getByTestId('users-table')).toBeVisible();
+
+});
+
+// new plan
+/* 
+  --- startup backend in CI with test configuration ---
+         -- figure out if that works with locahost and if .env vars need to change
+
+
+
+*/
+
+
+
 // test("access franchise dashboard", async ({ page }) => {
 //     await basicInit(page);
 

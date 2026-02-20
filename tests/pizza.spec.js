@@ -81,22 +81,6 @@ await expect(page.getByRole('main')).toContainText('Unleash Your Potential');
 });
 
 
-test('login as admin', async ({ page }) => {
-
-    // TODO: hardcoded admin user, change to be more robust in future
-
-await page.goto('/');
-
-await page.getByRole('link', { name: 'Login' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
-await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-await page.getByRole('textbox', { name: 'Password' }).fill('admin');
-await page.getByRole('button', { name: 'Login' }).click();
-await page.getByRole('button').filter({ hasText: /^$/ }).click();
-await page.getByRole('button').filter({ hasText: /^$/ }).click();
-
-
-});
 
 
 test('login, create franchise, logout', async ({ page }) => {
