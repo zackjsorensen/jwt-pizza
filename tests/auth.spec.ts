@@ -54,6 +54,26 @@ async function basicInit(page: Page) {
         await route.fulfill({ json: loginRes });
     });
 
+    // return users for admin to view
+    await page.route("*/**/api/user?page**", async (route) => {
+        // "/api/user?page=1&limit=10&name=*"
+        if (!loggedInUser || !loggedInUser.roles?.find((r) => r.role === Role.Admin)) {
+            await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
+            return;
+        }
+        const url = new URL(route.request().url());
+        const page = Number(url.searchParams.get("page") || "0");
+        const limit = Number(url.searchParams.get("limit") || "10");
+        const name = url.searchParams.get("name");
+        const users = Object.values(validUsers ).filter((u) => {
+            if (!name) return true;
+            return u.name!.includes(name);
+        });
+        const start = page * limit;
+        const end = start + limit;
+        await route.fulfill({ json: { users: users.slice(start, end), more: end < users.length } });
+    });
+
     await page.route(/\/api\/user\/(\d+)/, async (route) => {
         expect(route.request().method()).toBe("PUT");
         const updateUser: User = route.request().postDataJSON();
@@ -239,6 +259,23 @@ await expect(page.getByTestId('users-header')).toBeVisible();
 await expect(page.getByTestId('users-table')).toBeVisible();
 
 });
+
+test('delete user as admin', async ({ page }) => { 
+    await basicInit(page);
+    await page.goto('/');
+    
+    await page.getByRole('link', { name: 'Login' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('link', { name: 'Admin' }).click();
+    await expect(page.getByTestId('users-table')).toBeVisible();
+    await expect(page.getByText('a@jwt.com')).toBeVisible();
+    await expect(page.getByText('Kai Chen')).toBeVisible();
+});
+
+
+
 
 // new plan
 /* 
