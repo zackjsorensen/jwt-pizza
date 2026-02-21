@@ -1,6 +1,7 @@
 import { test, expect } from "playwright-test-coverage";
 import { Page } from "playwright";
 import { User, Role } from "../src/service/pizzaService";
+import { basicInit } from "./basicInit";
 
 test.setTimeout(process.env.CI ? 30000 : 10000);
 
@@ -187,4 +188,35 @@ test("update admin info", async ({ page }) => {
     await page.getByRole("button", { name: "Login" }).click();
     await page.getByRole("link", { name: "AU" }).click();
     await expect(page.getByRole("main")).toContainText("Admin User Updated");
+});
+
+test("create store", async ({ page }) => {
+    await basicInit(page);
+
+    await page.route(/\/api\/franchise\/\d+\/store$/, async (route) => {
+        if (route.request().method() === "POST") {
+            const body = route.request().postDataJSON();
+            await route.fulfill({
+                json: { id: "99", name: body.name ?? "" },
+            });
+            return;
+        }
+        await route.continue();
+    });
+
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("f@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("f");
+    await page.getByRole("button", { name: "Login" }).click();
+
+    await page.getByRole("link", { name: "Franchise" }).first().click();
+    await page.getByRole("button", { name: "Create store" }).waitFor({ state: "visible" });
+    await page.getByRole("button", { name: "Create store" }).click();
+
+    await expect(page.getByRole("heading", { name: "Create store" })).toBeVisible();
+    await page.getByPlaceholder("store name").fill("Provo");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    await expect(page).toHaveURL(/\/franchise-dashboard\/?$/);
+    await expect(page.getByRole("button", { name: "Create store" })).toBeVisible();
 });
