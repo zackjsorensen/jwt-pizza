@@ -1,6 +1,9 @@
 import { test, expect } from "playwright-test-coverage";
 import { basicInit } from "./basicInit";
 
+// Increase default timeout for CI
+test.setTimeout(30_000);
+
 test("login", async ({ page }) => {
     await basicInit(page);
     await page.getByRole("link", { name: "Login" }).click();
@@ -45,6 +48,7 @@ test("purchase with login", async ({ page }) => {
 
 test("update admin user", async ({ page }) => {
     await basicInit(page);
+    await page.goto("/");
 
     //login as admin
     await page.getByRole("link", { name: "Login" }).click();

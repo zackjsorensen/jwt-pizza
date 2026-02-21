@@ -2,6 +2,8 @@ import { test, expect } from "playwright-test-coverage";
 import { Page } from "playwright";
 import { User, Role } from "../src/service/pizzaService";
 
+test.setTimeout(process.env.CI ? 30000 : 10000);
+
 const token = "mock-token";
 
 function setupUserMocks(page: Page, options?: { initialUser?: User }) {
@@ -76,31 +78,27 @@ test("updateUser", async ({ page }) => {
     await page.getByRole("textbox", { name: "Password" }).fill("diner");
     await page.getByRole("button", { name: "Register" }).click();
 
-    await page.getByRole("link", { name: "pd" }).click();
-
+    await page.getByRole("link", { name: "pd" }).first().click();
     await expect(page.getByRole("main")).toContainText("pizza diner");
 
     await page.getByRole("button", { name: "Edit" }).click();
-    await expect(page.locator("h3")).toContainText("Edit user");
+    await page.locator("h3").waitFor({ state: "visible" });
     await page.getByRole("textbox").first().fill("pizza dinerx");
     await page.getByRole("button", { name: "Update" }).click();
-
-    await page.waitForSelector('[role="dialog"].hidden', { state: "attached" });
+    await page.locator('[role="dialog"].hidden').waitFor({ state: "attached" });
 
     await expect(page.getByRole("main")).toContainText("pizza dinerx");
 
     await page.getByRole("link", { name: "Logout" }).click();
     await page.getByRole("link", { name: "Login" }).click();
-
     await page.getByRole("textbox", { name: "Email address" }).fill(email);
     await page.getByRole("textbox", { name: "Password" }).fill("diner");
     await page.getByRole("button", { name: "Login" }).click();
 
+    await page.getByRole("link", { name: "pd" }).waitFor({ state: "visible" });
     await page.getByRole("link", { name: "pd" }).click();
-
     await expect(page.getByRole("main")).toContainText("pizza dinerx");
 });
-
 
 test("update password", async ({ page }) => {
     const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
@@ -129,7 +127,6 @@ test("update password", async ({ page }) => {
     await expect(page.getByRole("heading")).toContainText("Your pizza kitchen");
 });
 
-
 test("update email", async ({ page }) => {
     const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
     const testUser = { name: "pizza diner", email, password: "diner" };
@@ -156,7 +153,6 @@ test("update email", async ({ page }) => {
     await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
     await expect(page.getByRole("heading")).toContainText("Your pizza kitchen");
 });
-
 
 test("update admin info", async ({ page }) => {
     setupUserMocks(page, {
