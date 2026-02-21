@@ -1,4 +1,5 @@
 import { test, expect } from 'playwright-test-coverage';
+import { basicInit } from './basicInit';
 
 test('home page', async ({ page }) => {
   await page.goto('/');
@@ -42,11 +43,12 @@ test('logged out test', async ({ page, context }) => {
 
 
 test('login and buy pizza', async ({ page }) => {
+  await basicInit(page);
 await page.goto('/');
 await page.getByRole('link', { name: 'Login' }).click();
-await page.getByRole('textbox', { name: 'Email address' }).fill('z@jwt.com');
+await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
 await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-await page.getByRole('textbox', { name: 'Password' }).fill('z');
+await page.getByRole('textbox', { name: 'Password' }).fill('a');
 await page.getByRole('button', { name: 'Login' }).click();
 await expect(page.locator('#navbar-dark')).toContainText('Logout');
 await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
