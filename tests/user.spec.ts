@@ -1,7 +1,60 @@
 import { test, expect } from "playwright-test-coverage";
+import { User, Role } from "../src/service/pizzaService";
 
 test("updateUser", async ({ page }) => {
     const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
+    let storedUser: User = {
+        id: "100",
+        name: "pizza diner",
+        email,
+        password: "diner",
+        roles: [{ role: Role.Diner }],
+    };
+    const token = "mock-token";
+
+    await page.route("*/**/api/auth", async (route) => {
+        if (route.request().method() === "DELETE") {
+            await route.fulfill({ status: 204 });
+            return;
+        }
+        if (route.request().method() === "POST") {
+            const body = route.request().postDataJSON();
+            storedUser = {
+                id: storedUser.id ?? "100",
+                name: body.name,
+                email: body.email,
+                password: body.password,
+                roles: [{ role: Role.Diner }],
+            };
+            await route.fulfill({ json: { user: storedUser, token } });
+            return;
+        }
+        if (route.request().method() === "PUT") {
+            const body = route.request().postDataJSON();
+            if (body.email === storedUser.email && body.password === storedUser.password) {
+                await route.fulfill({ json: { user: storedUser, token } });
+            } else {
+                await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
+            }
+            return;
+        }
+        await route.continue();
+    });
+
+    await page.route(/\/api\/user\/(\d+)/, async (route) => {
+        if (route.request().method() === "PUT") {
+            const updatedUser: User = route.request().postDataJSON();
+            const prevPassword = storedUser.password;
+            storedUser = { ...storedUser, ...updatedUser };
+            if (updatedUser.password === undefined || updatedUser.password === "") {
+                storedUser.password = prevPassword ?? "diner";
+            }
+            await route.fulfill({ json: { user: storedUser, token } });
+            return;
+        }
+        await route.continue();
+    });
+
     await page.goto("/");
     await page.getByRole("link", { name: "Register" }).click();
     await page.getByRole("textbox", { name: "Full name" }).fill("pizza diner");
