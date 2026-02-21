@@ -1,18 +1,19 @@
 import { test, expect } from "playwright-test-coverage";
+import { Page } from "playwright";
 import { User, Role } from "../src/service/pizzaService";
 
-test("updateUser", async ({ page }) => {
-    const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
-    let storedUser: User = {
+const token = "mock-token";
+
+function setupUserMocks(page: Page, options?: { initialUser?: User }) {
+    let storedUser: User = options?.initialUser ?? {
         id: "100",
-        name: "pizza diner",
-        email,
-        password: "diner",
+        name: "",
+        email: "",
+        password: "",
         roles: [{ role: Role.Diner }],
     };
-    const token = "mock-token";
 
-    await page.route("*/**/api/auth", async (route) => {
+    page.route("*/**/api/auth", async (route) => {
         if (route.request().method() === "DELETE") {
             await route.fulfill({ status: 204 });
             return;
@@ -24,7 +25,7 @@ test("updateUser", async ({ page }) => {
                 name: body.name,
                 email: body.email,
                 password: body.password,
-                roles: [{ role: Role.Diner }],
+                roles: storedUser.roles ?? [{ role: Role.Diner }],
             };
             await route.fulfill({ json: { user: storedUser, token } });
             return;
@@ -41,19 +42,32 @@ test("updateUser", async ({ page }) => {
         await route.continue();
     });
 
-    await page.route(/\/api\/user\/(\d+)/, async (route) => {
+    page.route(/\/api\/user\/(\d+)/, async (route) => {
         if (route.request().method() === "PUT") {
             const updatedUser: User = route.request().postDataJSON();
             const prevPassword = storedUser.password;
             storedUser = { ...storedUser, ...updatedUser };
             if (updatedUser.password === undefined || updatedUser.password === "") {
-                storedUser.password = prevPassword ?? "diner";
+                storedUser.password = prevPassword ?? "";
             }
             await route.fulfill({ json: { user: storedUser, token } });
             return;
         }
         await route.continue();
     });
+
+    page.route("*/**/api/order", async (route) => {
+        if (route.request().method() === "GET") {
+            await route.fulfill({ json: { orders: [] } });
+            return;
+        }
+        await route.continue();
+    });
+}
+
+test("updateUser", async ({ page }) => {
+    const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
+    setupUserMocks(page);
 
     await page.goto("/");
     await page.getByRole("link", { name: "Register" }).click();
@@ -89,84 +103,92 @@ test("updateUser", async ({ page }) => {
 
 
 test("update password", async ({ page }) => {
-
     const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
-    const testUser = { name: "pizza diner",
-        email: email,
-        password: "diner",
-    };
+    const testUser = { name: "pizza diner", email, password: "diner" };
+    setupUserMocks(page);
 
-    await page.goto('http://localhost:5173/register');
-    await page.getByRole('textbox', { name: 'Full name' }).fill(testUser.name);
-    await page.getByRole('textbox', { name: 'Full name' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Email address' }).fill(testUser.email);
-    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Password' }).fill(testUser.password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await page.getByRole('link', { name: 'pd', exact: true }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.goto("/register");
+    await page.getByRole("textbox", { name: "Full name" }).fill(testUser.name);
+    await page.getByRole("textbox", { name: "Email address" }).fill(testUser.email);
+    await page.getByRole("textbox", { name: "Password" }).fill(testUser.password);
+    await page.getByRole("button", { name: "Register" }).click();
+    await page.getByRole("link", { name: "pd", exact: true }).click();
+    await page.getByRole("button", { name: "Edit" }).click();
 
     const newPassword = "newpassword";
-
-    await page.locator('#password').click();
-    await page.locator('#password').fill(newPassword);
-    await page.getByRole('button', { name: 'Update' }).click();
-    await page.getByRole('link', { name: 'Logout' }).click();
-    await page.getByRole('link', { name: 'Login' }).click();
-    await page.getByRole('textbox', { name: 'Email address' }).fill(testUser.email);
-    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Password' }).fill(newPassword);
-    await page.getByRole('button', { name: 'Login' }).click();
-    await page.getByRole('link', { name: 'pd', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
-    await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
-   
+    await page.locator("#password").click();
+    await page.locator("#password").fill(newPassword);
+    await page.getByRole("button", { name: "Update" }).click();
+    await page.getByRole("link", { name: "Logout" }).click();
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill(testUser.email);
+    await page.getByRole("textbox", { name: "Password" }).fill(newPassword);
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "pd", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
+    await expect(page.getByRole("heading")).toContainText("Your pizza kitchen");
 });
 
 
 test("update email", async ({ page }) => {
-
     const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
-    const testUser = { name: "pizza diner",
-        email: email,
-        password: "diner",
-    };
+    const testUser = { name: "pizza diner", email, password: "diner" };
+    setupUserMocks(page);
 
-    await page.goto('http://localhost:5173/register');
-    await page.getByRole('textbox', { name: 'Full name' }).fill(testUser.name);
-    await page.getByRole('textbox', { name: 'Full name' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Email address' }).fill(testUser.email);
-    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Password' }).fill(testUser.password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await page.getByRole('link', { name: 'pd', exact: true }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    await page.goto("/register");
+    await page.getByRole("textbox", { name: "Full name" }).fill(testUser.name);
+    await page.getByRole("textbox", { name: "Email address" }).fill(testUser.email);
+    await page.getByRole("textbox", { name: "Password" }).fill(testUser.password);
+    await page.getByRole("button", { name: "Register" }).click();
+    await page.getByRole("link", { name: "pd", exact: true }).click();
+    await page.getByRole("button", { name: "Edit" }).click();
 
-    const newemail = "newemail@jwt.com";
-
-    await page.locator('input[type="email"]').click();
-    await page.locator('input[type="email"]').fill(newemail);
-    await page.getByRole('button', { name: 'Update' }).click();
-    await page.getByRole('link', { name: 'Logout' }).click();
-    await page.getByRole('link', { name: 'Login' }).click();
-    await page.getByRole('textbox', { name: 'Email address' }).fill(newemail);
-    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Password' }).fill(testUser.password);
-    await page.getByRole('button', { name: 'Login' }).click();
-    await page.getByRole('link', { name: 'pd', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
-    await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
-   
+    const newEmail = "newemail@jwt.com";
+    await page.locator("input[type='email']").click();
+    await page.locator("input[type='email']").fill(newEmail);
+    await page.getByRole("button", { name: "Update" }).click();
+    await page.getByRole("link", { name: "Logout" }).click();
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill(newEmail);
+    await page.getByRole("textbox", { name: "Password" }).fill(testUser.password);
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "pd", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
+    await expect(page.getByRole("heading")).toContainText("Your pizza kitchen");
 });
 
 
 test("update admin info", async ({ page }) => {
+    setupUserMocks(page, {
+        initialUser: {
+            id: "1",
+            name: "Admin User",
+            email: "admin@jwt.com",
+            password: "admin",
+            roles: [{ role: Role.Admin }],
+        },
+    });
 
-    // need to mock the getUser endpoint to return an admin user, then test that the admin can update their info and that it persists.
+    await page.goto("/");
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("admin@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("admin");
+    await page.getByRole("button", { name: "Login" }).click();
 
-    // mock
-    
+    await page.getByRole("link", { name: "AU" }).click();
+    await expect(page.getByRole("main")).toContainText("Admin User");
+    await page.getByRole("button", { name: "Edit" }).click();
+    await page.getByRole("textbox").first().fill("Admin User Updated");
+    await page.getByRole("button", { name: "Update" }).click();
 
-    const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
+    await page.waitForSelector('[role="dialog"].hidden', { state: "attached" });
+    await expect(page.getByRole("main")).toContainText("Admin User Updated");
 
+    await page.getByRole("link", { name: "Logout" }).click();
+    await page.getByRole("link", { name: "Login" }).click();
+    await page.getByRole("textbox", { name: "Email address" }).fill("admin@jwt.com");
+    await page.getByRole("textbox", { name: "Password" }).fill("admin");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("link", { name: "AU" }).click();
+    await expect(page.getByRole("main")).toContainText("Admin User Updated");
 });
