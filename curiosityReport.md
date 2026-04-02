@@ -4,10 +4,10 @@ For my report, I wanted to dive deeper into Docker. Initially I wanted to unders
 
 ## Anatomy of Docker (review)
 The pieces that make up Docker
-	- Docker daemon - the engine that runs commands, accessed through the Docker CLI
-	- Image: Instructions on how to build a container with all needed dependencies
-	- Container: a built, running piece of software that can be run across different computing environments
-	- Docker service: lets containers talk to each other
+- Docker daemon - the engine that runs commands, accessed through the Docker CLI
+- Image: Instructions on how to build a container with all needed dependencies
+- Container: a built, running piece of software that can be run across different computing environments
+- Docker service: lets containers talk to each other
 
 So, an image is taken by the Docker daemon and turned into a running container. 
 
