@@ -54,3 +54,9 @@ Because it wasn't part of the correct network, my the hostname api-server was no
 
 ## Conclusion
 I know containers are something I will use a lot in the future, and so I wanted to solidfy my understaning of them. While reviewing the makeup of docker was helpful, it was fun to build a simple multi-container app and see how simple Docker makes inter-container communication, as well as think about the possibilities this tool offers. Docker-compose lets you manage interactions between containers, and even deploy clones of certain containers for scaling. I expect this knowledge to be especially useful as I start the sandbox program next year. In a start-up environment, lots of things, including computing environment, can change quickly. That makes the reliability and flexibility of images extra valuable, as we can quickly get our app running in a new environment with zero programming. I expect to continue to learn about and use images and docker and take this to the next level. 
+
+## Sources
+- Gemini- used to generate the first docker-compose.yaml file, though I made some modifications
+- Claude - used to create the simple http client and server
+- Docker docs: https://docs.docker.com/engine/network/ & https://www.docker.com/resources/what-container/
+- https://www.sysdig.com/learn-cloud-native/docker-101-the-docker-components
